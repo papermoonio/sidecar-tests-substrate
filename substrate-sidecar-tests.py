@@ -245,6 +245,7 @@ class SubstrateSidecarTester:
         rpc_block_number = int(rpc_block['block']['header']['number'], 16)
         sidecar_block_number = int(sidecar_data.get('number'))
 
+        # Blocks are read sequentially, so they could be off by one in some cases
         if abs(sidecar_block_number - rpc_block_number) > 1:
             self.logger.error(f"  ✗ Block number mismatch - Sidecar: {sidecar_block_number}, RPC: {rpc_block_number}")
             return False

@@ -224,25 +224,38 @@ class SubstrateSidecarTester:
     def test_head_block(self) -> bool:
         """Compare block data between Substrate RPC and Sidecar API"""
         self.logger.info(f"Testing head block")
-        
-        # Fetch from Sidecar
-        sidecar_data, sidecar_error = self._fetch_sidecar_data("/blocks/head")
-        if sidecar_error:
-            self.logger.error(f"Failed to fetch block from Sidecar: {sidecar_error}")
-            return False
-    
+
         # Fetch from Substrate RPC
         rpc_head_hash, rpc_head_error = self._fetch_substrate_rpc("chain_getFinalizedHead")
         if rpc_head_error:
             self.logger.error(f"Failed to fetch block from RPC: {rpc_head_error}")
             return False
-        
-        # Fetch from Substrate RPC
+
         rpc_block, rpc_block_error = self._fetch_substrate_rpc("chain_getBlock", [rpc_head_hash])
         if rpc_block_error:
             self.logger.error(f"Failed to fetch block from RPC: {rpc_block_error}")
             return False
-        
+                
+        # Fetch from Sidecar
+        sidecar_data, sidecar_error = self._fetch_sidecar_data("/blocks/head")
+        if sidecar_error:
+            self.logger.error(f"Failed to fetch block from Sidecar: {sidecar_error}")
+            return False
+
+        rpc_block_number = int(rpc_block['block']['header']['number'], 16)
+        sidecar_block_number = int(sidecar_data.get('number'))
+
+        # Blocks are read sequentially, so they could be off by one in some cases
+        if abs(sidecar_block_number - rpc_block_number) > 1:
+            self.logger.error(f"  ✗ Block number mismatch - Sidecar: {sidecar_block_number}, RPC: {rpc_block_number}")
+            return False
+        else:
+            if sidecar_block_number != rpc_block_number:
+                sidecar_data, sidecar_error = self._fetch_sidecar_data(f"/blocks/{rpc_head_hash}")
+                if sidecar_error:
+                    self.logger.error(f"Failed to fetch block from Sidecar: {sidecar_error}")
+                    return False
+                
         # Compare key fields
         comparisons = [
             ("Block Number", int(sidecar_data.get('number')), int(rpc_block['block']['header']['number'], 16)),

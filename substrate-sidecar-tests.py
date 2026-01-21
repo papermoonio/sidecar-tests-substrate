@@ -147,7 +147,7 @@ class SubstrateSidecarTester:
             sidecar_signature = sidecar_ext.get('signature')
             if sidecar_signature:
                 sidecar_signer = sidecar_signature.get('signer', {}).get('id', 'unknown')
-                rpc_signer = extrinsic_rpc['signature']['signer']['address']
+                rpc_signer = decoded_ext['address']
                 comparisons.append(("Extrinsics - Signer", sidecar_signer, rpc_signer))            
 
         for field_name, sidecar_value, rpc_value in comparisons:
